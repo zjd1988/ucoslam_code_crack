@@ -1,0 +1,9 @@
+1.0.8
+    Adapted to opencv 4
+    Added fisheye model
+1.0.7
+	Bugs corrected
+1.0.6
+	Added PVMS for 3D point reconstruction
+1.0.5
+    Removed bug in keyframe culling.
