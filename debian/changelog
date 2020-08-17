@@ -1,0 +1,5 @@
+ucoslam (1.0.8-0ppa0-bionic) bionic; urgency=medium
+
+   * New version of the library 1.0.8
+
+ -- Rafael Muñoz Salinas <rmsalinas@uco.es>  Sun, 26 Jan 2020 09:14:23 +0100
