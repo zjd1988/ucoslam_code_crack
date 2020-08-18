@@ -167,7 +167,7 @@ void LoopDetector::_6767859416531794787(Frame &frame, LoopClosureInfo &loop_clos
 
   all_edges.push_back({loop_closure_info.curRefFrame, frame.idx});
   auto &poses = loop_closure_info.optimPoses;
-  std::map<uint64_t, float> _4835184743873567059;
+  std::map<uint64_t, float> edge_weights;
   float max_edge_weight = 0;
   for (auto edge : all_edges)
   {
@@ -181,13 +181,13 @@ void LoopDetector::_6767859416531794787(Frame &frame, LoopClosureInfo &loop_clos
       edge_weight = TheMap->TheKpGraph.getEdge(edge.first, edge.second);
     max_edge_weight = std::max(edge_weight, max_edge_weight);
 
-    _4835184743873567059[CovisGraph::join(edge.first, edge.second)] = edge_weight;
+    edge_weights[CovisGraph::join(edge.first, edge.second)] = edge_weight;
   }
 
   if(!graph.isEdge(frame.idx, loop_closure_info.matchingFrameIdx)) 
   {
     all_edges.push_back({frame.idx, loop_closure_info.matchingFrameIdx});
-    _4835184743873567059[CovisGraph::join(frame.idx,loop_closure_info.matchingFrameIdx)] = max_edge_weight;
+    edge_weights[CovisGraph::join(frame.idx, loop_closure_info.matchingFrameIdx)] = max_edge_weight;
   }
   poses[frame.idx] = frame.pose_f2g;
 

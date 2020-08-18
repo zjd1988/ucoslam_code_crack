@@ -87,9 +87,8 @@ namespace ucoslam
 
   float FrameExtractor::getSensitivity()
   {
-    if (!m_feature_detector)
-      throw std::runtime_error(string(__PRETTY_FUNCTION__) + 
-      "Should not call this function since the class is not initialized");
+    if(!m_feature_detector)
+      throw std::runtime_error(string(__PRETTY_FUNCTION__) + "Should not call this function since the class is not initialized");
     return m_feature_detector->getSensitivity();
   }
 
@@ -322,7 +321,7 @@ namespace ucoslam
 
     feature_detect_thread.join();
     marker_detect_thread.join();
-    if (debug::Debug::getLevel() >= 100 || _7614055061414639783)
+    if (debug::Debug::getLevel() >= 100 || m_save_image_flag)
       image_info.origin_gray_image.copyTo(frame.image);
     frame.scaleFactors.resize(m_feature_detector->getParams().nOctaveLevels);
     double scale_factor = m_feature_detector->getParams().scaleFactor;

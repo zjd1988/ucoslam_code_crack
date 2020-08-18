@@ -49,7 +49,7 @@ class System {
     bool reLocalization(Frame &frame, se3 &se3_transform);
     struct KeyPointRelocResult{
       se3 se3_transform;
-      int _1840552773835924014 = 0;
+      int reserve = 0;
       std::vector<uint32_t> frame_ids;
       std::vector<cv::DMatch> matches;
     };
@@ -77,8 +77,8 @@ class System {
     STATE m_state = STATE_LOST;
     MODES m_mode = MODE_SLAM;
     std::shared_ptr<MapManager> m_map_manager;
-    cv::Mat _14463320619150402643;
-    uint64_t _13033649816026327368 = 0;
+    cv::Mat m_transformation;
+    uint64_t m_frame_count = 0;
     int64_t m_fseq_idx = -1;
 };
 }

@@ -43,7 +43,7 @@ public:
   }
   bool& saveImage()
   {
-    return _7614055061414639783;
+    return m_save_image_flag;
   }
   void toStream(std::ostream &str) const;
   void fromStream(std::istream &str);
@@ -59,21 +59,14 @@ private:
   };
 
   std::shared_ptr<Feature2DSerializable> m_feature_detector;
-
-  void prepare(float scale_factor,
-                        const cv::Mat &first_image,
-                        const ImageParams &_175247760147,
-                        const cv::Mat &second_image = cv::Mat());
-
-  void extract(const ImageInfo &image_info, Frame &frame,
-                        uint32_t frameseq_idx = std::numeric_limits<uint32_t>::max());
-
+  void prepare(float scale_factor, const cv::Mat &first_image, const ImageParams &ip, const cv::Mat &second_image = cv::Mat());
+  void extract(const ImageInfo &image_info, Frame &frame, uint32_t frameseq_idx = std::numeric_limits<uint32_t>::max());
   vector<ImageInfo> m_image_stat_info;
   uint32_t _12273370977065616393 = 0;
   bool _12350051723532614025 = true;
   bool m_detect_marker = true;
   bool m_detect_keypoints = true;
-  bool _7614055061414639783 = false;
+  bool m_save_image_flag = false;
   Feature2DSerializable::FeatParams m_feat_params;
   std::shared_ptr<aruco::MarkerDetector> m_marker_detector;
   float m_marker_size = 0;

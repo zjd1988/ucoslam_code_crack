@@ -1,4 +1,3 @@
-
 #include <list>
 #include <fstream>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -54,9 +53,8 @@ void System::updateParams(const Params &params ) {
 
 
 void System::updateFrameExtractorParam() {
-    m_params.nthreads_feature_detector = max (1, m_params.nthreads_feature_detector);
-    std::shared_ptr<Feature2DSerializable> frame_extractor = Feature2DSerializable::create(
-                  m_params.kpDescriptorType);
+    m_params.nthreads_feature_detector = max(1, m_params.nthreads_feature_detector);
+    std::shared_ptr<Feature2DSerializable> frame_extractor = Feature2DSerializable::create(m_params.kpDescriptorType);
     frame_extractor->setParams(m_params.extraParams);
     m_params.maxDescDistance = frame_extractor ->getMinDescDistance();
     m_frame_extractor->setParams(frame_extractor, m_params);
@@ -111,7 +109,7 @@ void System::resetTracker() {
     m_state = STATE_LOST;
     m_current_frame.clear();
     m_prev_frame.clear();
-    _14463320619150402643 = cv::Mat();
+    m_transformation = cv::Mat();
     m_fseq_idx = -1;
 }
 
@@ -180,19 +178,19 @@ cv::Mat System::process(const Frame &frame) {
     }
     if(m_state == STATE_TRACKING)
     {
-        _14463320619150402643 = cv::Mat::eye(4, 4, 5);
+        m_transformation = cv::Mat::eye(4, 4, 5);
         if(_16937225862434286412.isValid())
         {
-            _14463320619150402643 = m_se3.convert() * _16937225862434286412.convert().inv();
+            m_transformation = m_se3.convert() * _16937225862434286412.convert().inv();
         }
     }
     else
     {
-        _14463320619150402643 = cv::Mat();
+        m_transformation = cv::Mat();
     }
 
     m_current_frame.pose_f2g = m_se3;
-    if(++_13033649816026327368 > (10 * 4 * 12 * 34 * 6) / 2)
+    if(++m_frame_count > (10 * 4 * 12 * 34 * 6) / 2)
         m_se3 = cv::Mat();
     if(m_state == STATE_LOST)
         return cv::Mat();
@@ -320,7 +318,7 @@ uint64_t System::getHashValue(bool flag) const {
     if(flag)
         cout << "\\tSystem 11.sig=" << hash_value << endl;
 
-    hash_value += _14463320619150402643;
+    hash_value += m_transformation;
     hash_value += m_fseq_idx;
     if(flag)
         cout << "\\tSystem 12.sig=" << hash_value << endl;
@@ -538,11 +536,11 @@ std::vector<System::KeyPointRelocResult> System::getKeyPointRelocResult(Frame &f
         }
         for( int j = 0; j < relocalization_results[i].matches.size(); j++)
         {
-            auto &_175247759380 = relocalization_results[i].matches[ j ].trainIdx;
-            if( !m_map->map_points.is(_175247759380))
+            auto &train_index = relocalization_results[i].matches[j].trainIdx;
+            if( !m_map->map_points.is(train_index))
                 relocalization_results[i].matches[j].trainIdx = -1;
 
-            if( m_map->map_points[_175247759380 ].isBad())
+            if( m_map->map_points[train_index].isBad())
                 relocalization_results[i].matches[j].trainIdx = -1;
         }
         remove_unused_matches(relocalization_results[i].matches);
@@ -652,30 +650,30 @@ std::vector<cv::DMatch> System::matchFrames(Frame& curr_frame, Frame &prev_frame
                 int octave = prev_frame.und_kpts[i].octave;
                 std::vector<uint32_t> key_points_indexes = curr_frame.getKeyPointsInRegion(proj_point,
                       proj_dist_thresh * scale_factor, octave, octave);
-                float _16940367568811467085 = dist_thresh + 0.01, min_desc_dist = std::numeric_limits<float>::max();
+                float min_desc_dist = dist_thresh + 0.01, second_min_desc_dist = std::numeric_limits<float>::max();
                 uint32_t query_idx = std::numeric_limits<uint32_t>::max();
                 for(auto index : key_points_indexes)
                 {
                     if(curr_frame.und_kpts[index].octave == prev_frame.und_kpts[i].octave)
                     {
                         float dist = MapPoint::getDescDistance(prev_frame.desc, i, curr_frame.desc, index);
-                        if(dist < _16940367568811467085)
-                        {
-                            _16940367568811467085 = dist;
-                            query_idx = index;
-                        }
-                        else if(dist < min_desc_dist)
+                        if(dist < min_desc_dist)
                         {
                             min_desc_dist = dist;
+                            query_idx = index;
+                        }
+                        else if(dist < second_min_desc_dist)
+                        {
+                            second_min_desc_dist = dist;
                         }
                     }
                 }
-                if(query_idx != std::numeric_limits<uint32_t>::max() && _16940367568811467085 < 0.7 * min_desc_dist)
+                if(query_idx != std::numeric_limits<uint32_t>::max() && min_desc_dist < 0.7 * second_min_desc_dist)
                 {
                     cv::DMatch match;
                     match.queryIdx = query_idx;
                     match.trainIdx = map_point.id;
-                    match.distance = _16940367568811467085;
+                    match.distance = min_desc_dist;
                     matches.push_back(match);
                 }
             }
@@ -694,8 +692,8 @@ se3 System::updatePose(Frame &frame, se3 se3_transform) {
     se3 update_se3_transform = se3_transform;
     if(m_map->map_points.size() > 0)
     {
-        if(!_14463320619150402643.empty())
-            update_se3_transform = _14463320619150402643 * update_se3_transform.convert();
+        if(!m_transformation.empty())
+            update_se3_transform = m_transformation * update_se3_transform.convert();
         frame.pose_f2g = update_se3_transform;
         matches = matchFrames(frame, m_prev_frame, m_params.maxDescDistance * 1.5, m_params.projDistThr);
         int good_matches_num = 0;
@@ -864,7 +862,7 @@ void System::clear() {
     m_state = STATE_LOST;
     m_map.reset();
     m_map_initializer = std::make_shared<MapInitializer>();
-    _14463320619150402643 = cv::Mat();
+    m_transformation = cv::Mat();
     m_fseq_idx = -1;
 }
 
@@ -886,9 +884,9 @@ void System::saveToFile(string filepath)
     m_prev_frame.toStream(fstr);
     m_frame_extractor->toStream(fstr);
     m_map_manager->toStream(fstr);
-    toStream__(_14463320619150402643, fstr);
+    toStream__(m_transformation, fstr);
     fstr.write((char* )&m_fseq_idx,sizeof(m_fseq_idx));
-    fstr.write((char* )&_13033649816026327368,sizeof(_13033649816026327368));
+    fstr.write((char* )&m_frame_count,sizeof(m_frame_count));
     fstr.flush();
 }
 
@@ -910,8 +908,8 @@ void System::readFromFile(string filepath) {
     m_prev_frame.fromStream(istr);
     m_frame_extractor->fromStream(istr);
     m_map_manager->fromStream(istr);
-    fromStream__(_14463320619150402643, istr);
+    fromStream__(m_transformation, istr);
     istr.read((char*)&m_fseq_idx, sizeof(m_fseq_idx));
-    istr.read((char*)&_13033649816026327368, sizeof(_13033649816026327368));
+    istr.read((char*)&m_frame_count, sizeof(m_frame_count));
 }
 }
