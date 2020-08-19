@@ -11,209 +11,198 @@
 #include <thread>
 using namespace std;
 namespace ucoslam {
-void MapInitializer::setParams(Params &_2654435881) { _params = _2654435881; }
+void MapInitializer::setParams(Params &p) { _params = p; }
 
-void MapInitializer::reset() {
-  _9860761537440310106.clear();
-  _refFrame.clear();
+void MapInitializer::reset() 
+{
+    _9860761537440310106.clear();
+    _refFrame.clear();
 }
 
-bool MapInitializer::process( const Frame &_46082543180066935, std::shared_ptr<Map> _11093822290287) {
+bool MapInitializer::process(const Frame &frame, std::shared_ptr<Map> map) 
+{
 
-  if (_46082543180066935.und_kpts.size() < 10 && _params.mode == KEYPOINTS)
-    return false;
-  if(_params.allowArucoOneFrame)
-    if( _7274126694617365277( _46082543180066935, _11093822290287))
+    if(frame.und_kpts.size() < 10 && _params.mode == KEYPOINTS)
+        return false;
+    if(_params.allowArucoOneFrame)
     {
-      return true;
+        if( _7274126694617365277(frame, map))
+        {
+          return true;
+        }
     }
-  if ( !_refFrame.isValid())
-  {
-    setReferenceFrame( _46082543180066935);
-    return false;
-  }
-  else 
-  {
-    bool _11093822302335 = initialize_( _46082543180066935, _11093822290287);
-    if ( !_11093822302335)
+
+    if (!_refFrame.isValid())
     {
-      int _12854874829121162896 = 0;
-      for (auto _2654435878 : _46082543180066935.markers)
-        if (_refFrame.getMarkerIndex(_2654435878.id) !=-1)
-          _12854874829121162896++;
-      if(_9860761537440310106.size() < 50 && _12854874829121162896 == 0) 
-      {
-        setReferenceFrame(_46082543180066935);
-      }
+        setReferenceFrame(frame);
+        return false;
     }
-    return _11093822302335;
-  }
+    else 
+    {
+        bool result = initialize_(frame, map);
+        if (!result)
+        {
+            int count = 0;
+            for (auto marker : frame.markers)
+                if(_refFrame.getMarkerIndex(marker.id) != -1)
+                    count++;
+            if(_9860761537440310106.size() < 50 && count == 0)
+            {
+                setReferenceFrame(frame);
+            }
+        }
+        return result;
+    }
 }
 
-void MapInitializer :: setReferenceFrame (const Frame &_46082543180066935 ) {
-
-  _9860761537440310106.clear();
-  _46082543180066935.copyTo(_refFrame);
-
-  if (_params.mode != ARUCO && _46082543180066935.ids.size() != 0)
-  {
-    fmatcher.setParams( _46082543180066935, FrameMatcher::MODE_ALL,
-        _params.minDescDistance, _params.nn_match_ratio, true);
-  }
+void MapInitializer::setReferenceFrame(const Frame &frame)
+{
+    _9860761537440310106.clear();
+    frame.copyTo(_refFrame);
+    if (_params.mode != ARUCO && frame.ids.size() != 0)
+    {
+        fmatcher.setParams(frame, FrameMatcher::MODE_ALL, _params.minDescDistance, _params.nn_match_ratio, true);
+    }
 }
 
-bool MapInitializer::initialize_ (const Frame &_3005401603918369727, std::shared_ptr<Map>_11093822290287 ) {
-
-  auto _9347345574136541271 = [&](){
-    vector<cv::DMatch> _3005399809980531318;
-    vector<cv::Point3f> _3005399809980531321;
-    for (size_t _2654435874 = 0; _2654435874 < _9860761537440310106.size(); _2654435874++ ) 
-    {
-      if (isnan( _11999208601973379867[_2654435874].x) || isnan( _11999208601973379867[_2654435874].y) || isnan(_11999208601973379867[_2654435874].z))
+bool MapInitializer::initialize_(const Frame &frame2, std::shared_ptr<Map> map)
+{
+    auto _9347345574136541271 = [&](){
+      vector<cv::DMatch> _3005399809980531318;
+      vector<cv::Point3f> _3005399809980531321;
+      for (size_t _2654435874 = 0; _2654435874 < _9860761537440310106.size(); _2654435874++ ) 
       {
-        _9860761537440310106[ _2654435874].trainIdx = -1;
+        if (isnan(_11999208601973379867[_2654435874].x) || isnan(_11999208601973379867[_2654435874].y) 
+            || isnan(_11999208601973379867[_2654435874].z))
+        {
+          _9860761537440310106[_2654435874].trainIdx = -1;
+        }
+        else 
+        {
+          _3005399809980531318.push_back(_9860761537440310106[_2654435874]);
+          _3005399809980531321.push_back(_11999208601973379867[_2654435874]);
+        }
       }
-      else 
-      {
-        _3005399809980531318.push_back( _9860761537440310106[_2654435874]);
-        _3005399809980531321.push_back( _11999208601973379867[_2654435874]);
-      }
-    }
-    _9860761537440310106 = _3005399809980531318;
-    _11999208601973379867 = _3005399809980531321;
-  };
-  if( !_refFrame.isValid())
-    throw std::runtime_error(string(__PRETTY_FUNCTION__) + "\x20\x69\x6e\x76\x61\x6c\x69\x64\x20\x72\x65\x66\x65"
-        "\x72\x65\x6e\x63\x65\x20\x66\x72\x61\x6d\x65");
-  if( _params.mode != ARUCO && _3005401603918369727.ids.size() > 0)
-  {
-    _9860761537440310106 = fmatcher.match(_3005401603918369727, FrameMatcher::MODE_ALL);
-  }
-  auto _6807034019352783248 = _9813592252344743680(_refFrame, _3005401603918369727,
-                               _9860761537440310106, _params.minDistance);
-  if (_6807034019352783248.first.empty())
-    return false;
-  if (_6807034019352783248.second == KEYPOINTS && _9860761537440310106.size() < _params.minNumMatches)
-    return false;
-
-  Frame &_16997199184281837438 = _11093822290287->addKeyFrame(_refFrame);
-  _16997199184281837438.pose_f2g = cv::Mat::eye( 4, 4, 5);
-  Frame &_16997199184281837433 = _11093822290287->addKeyFrame(_3005401603918369727);
-  _16997199184281837433.pose_f2g = _6807034019352783248.first;
-  for (auto &_3005399795337363304 : _16997199184281837438.markers)
-  {
-    _11093822290287->addMarker(_3005399795337363304);
-    _11093822290287->addMarkerObservation(_3005399795337363304.id, _16997199184281837438.idx);
-  }
-
-  for (auto &_3005399795337363304 : _16997199184281837433.markers)
-  {
-    _11093822290287->addMarker(_3005399795337363304);
-    _11093822290287->addMarkerObservation(_3005399795337363304.id, _16997199184281837433.idx);
-  }
-  if (_6807034019352783248.second == KEYPOINTS) 
-  {
-  }
-  else 
-  {
-    if ( _3005401603918369727.ids.size() > 0 && _refFrame.ids.size() > 0)
+      _9860761537440310106 = _3005399809980531318;
+      _11999208601973379867 = _3005399809980531321;
+    };
+    if(!_refFrame.isValid())
+        throw std::runtime_error(string(__PRETTY_FUNCTION__) + "invalid reference frame");
+    if(_params.mode != ARUCO && frame2.ids.size() > 0)
     {
-      _9860761537440310106 =
-          fmatcher.matchEpipolar(
-              _3005401603918369727, FrameMatcher::
-                                        MODE_ALL,
-              _6807034019352783248.first)
-          ;
-      _11999208601973379867 = ucoslam::
-          Triangulate(_refFrame, _3005401603918369727,
-                      _6807034019352783248.first, _9860761537440310106)
-          ;
-      _9347345574136541271();
+        _9860761537440310106 = fmatcher.match(frame2, FrameMatcher::MODE_ALL);
     }
-  }
-  for (auto _2654435878 : _4498230092506100729)
-  {
-    cout << "\x6d\x6d\x20\x3a" << _2654435878.first << "\x20" << _2654435878.second << endl;
-    _11093822290287->map_markers[_2654435878.first].pose_g2m =_2654435878.second;
-  }
-  for (size_t _2654435874 = 0; _2654435874 < _9860761537440310106.size();_2654435874++)
-  {
-    if(!isnan(_11999208601973379867[_2654435874].x)) 
+    auto _6807034019352783248 = _9813592252344743680(_refFrame, frame2, _9860761537440310106, _params.minDistance);
+    if(_6807034019352783248.first.empty())
+        return false;
+    if(_6807034019352783248.second == KEYPOINTS && _9860761537440310106.size() < _params.minNumMatches)
+        return false;
+
+    Frame &_16997199184281837438 = map->addKeyFrame(_refFrame);
+    _16997199184281837438.pose_f2g = cv::Mat::eye( 4, 4, 5);
+    Frame &_16997199184281837433 = map->addKeyFrame(frame2);
+    _16997199184281837433.pose_f2g = _6807034019352783248.first;
+    for(auto &marker : _16997199184281837438.markers)
     {
-      auto&_175247759380 =_11093822290287->addNewPoint(_16997199184281837433.fseq_idx);
-      _175247759380.kfSinceAddition = 1;
-      _175247759380.setCoordinates(_11999208601973379867[_2654435874]);
-      _11093822290287->addMapPointObservation(_175247759380.id, _16997199184281837438.idx,_9860761537440310106[_2654435874].trainIdx);
-      _11093822290287->addMapPointObservation(_175247759380.id, _16997199184281837433.idx,_9860761537440310106[_2654435874].queryIdx);
+        map->addMarker(marker);
+        map->addMarkerObservation(marker.id, _16997199184281837438.idx);
     }
-  }
-  return true;
+
+    for(auto &marker : _16997199184281837433.markers)
+    {
+        map->addMarker(marker);
+        map->addMarkerObservation(marker.id, _16997199184281837433.idx);
+    }
+    if(_6807034019352783248.second == KEYPOINTS) 
+    {
+    }
+    else 
+    {
+        if(frame2.ids.size() > 0 && _refFrame.ids.size() > 0)
+        {
+            _9860761537440310106 =
+                fmatcher.matchEpipolar(frame2, FrameMatcher::MODE_ALL, _6807034019352783248.first);
+            _11999208601973379867 = ucoslam::Triangulate(_refFrame, frame2,
+                            _6807034019352783248.first, _9860761537440310106);
+            _9347345574136541271();
+        }
+    }
+    for(auto _2654435878 : _4498230092506100729)
+    {
+        cout << "mm :" << _2654435878.first << " " << _2654435878.second << endl;
+        map->map_markers[_2654435878.first].pose_g2m =_2654435878.second;
+    }
+    for(size_t _2654435874 = 0; _2654435874 < _9860761537440310106.size(); _2654435874++)
+    {
+        if(!isnan(_11999208601973379867[_2654435874].x)) 
+        {
+            auto&_175247759380 = map->addNewPoint(_16997199184281837433.fseq_idx);
+            _175247759380.kfSinceAddition = 1;
+            _175247759380.setCoordinates(_11999208601973379867[_2654435874]);
+            map->addMapPointObservation(_175247759380.id, _16997199184281837438.idx,_9860761537440310106[_2654435874].trainIdx);
+            map->addMapPointObservation(_175247759380.id, _16997199184281837433.idx,_9860761537440310106[_2654435874].queryIdx);
+        }
+    }
+    return true;
 }
 
 std::pair<cv::Mat, MapInitializer::MODE>
-MapInitializer::_9813592252344743680(const Frame &_3005401603918369712, const Frame &_3005401603918369727,
-        vector<cv::DMatch> &_6807036698572949990, float _1686524438688096954) {
+MapInitializer::_9813592252344743680(const Frame &ref_frame, const Frame &frame2,
+        vector<cv::DMatch> &_6807036698572949990, float _1686524438688096954) 
+{
 
-  if(_3005401603918369712.und_kpts.size() == 0 && _params.mode == KEYPOINTS)
-    return{cv::Mat(), NONE};
+    if(ref_frame.und_kpts.size() == 0 && _params.mode == KEYPOINTS)
+        return{cv::Mat(), NONE};
+    if(frame2.und_kpts.size() == 0 &&_params.mode == KEYPOINTS)
+        return { cv::Mat(), NONE};
+    if(ref_frame.markers.size() == 0 && _params.mode == ARUCO)
+        return { cv::Mat(), NONE};
+    if(frame2.markers.size() == 0 && _params.mode == ARUCO)
+        return { cv::Mat(), NONE};
+    if(ref_frame.und_kpts.size() == 0 && ref_frame.markers.size() == 0)
+        return {cv::Mat() , NONE};
+    if(frame2.und_kpts.size() == 0 && frame2.markers.size() == 0)
+        return{ cv::Mat(), NONE};
+    if(!ref_frame.imageParams.isValid())
+        throw std::runtime_error(string(__PRETTY_FUNCTION__) + "Need to call setParams to set the camera params first");
 
-  if (_3005401603918369727.und_kpts.size() == 0 &&_params.mode == KEYPOINTS)
-    return { cv::Mat(), NONE};
-  if(_3005401603918369712.markers.size() == 0 && _params.mode == ARUCO)
-    return { cv::Mat(), NONE};
-  if( _3005401603918369727.markers.size() == 0 && _params.mode == ARUCO)
-    return { cv::Mat(), NONE};
-  if ( _3005401603918369712.und_kpts.size() == 0 && _3005401603918369712.markers.size() == 0)
-    return {cv::Mat() , NONE};
-  if(_3005401603918369727.und_kpts.size() == 0 && _3005401603918369727.markers.size() == 0)
-    return{ cv::Mat(), NONE};
-  if (! _3005401603918369712.imageParams.isValid())
-    throw std::runtime_error(string(__PRETTY_FUNCTION__)
-                      + "\x4e\x65\x65\x64\x20\x74\x6f\x20\x63\x61\x6c\x6c\x20"
-                        "\x73\x65\x74\x50\x61\x72\x61\x6d\x73\x20\x74\x6f\x20"
-                        "\x73\x65\x74\x20\x74\x68\x65\x20\x63\x61\x6d\x65\x72"
-                        "\x61\x20\x70\x61\x72\x61\x6d\x73\x20\x66\x69\x72\x73"
-                        "\x74");
-
-  if(_params.markerSize <= 0)
-    throw std::runtime_error(string(__PRETTY_FUNCTION__)
-                + "\x49\x6e\x76\x61\x6c\x69\x64\x20\x6d\x61\x72\x6b\x65\x72\x20\x73"
-              "\x69\x7a\x65");
-  if(_params.mode == BOTH || _params.mode == ARUCO) 
-  {
-    auto _175247759708 = ARUCO_initialize(_3005401603918369712.markers, _3005401603918369727.markers,
-                             _3005401603918369712.imageParams.undistorted(),
-                             _params.markerSize, 0.02, _params.max_makr_rep_err,
-                             _params.minDistance, _4498230092506100729);
-
-    if (!_175247759708.empty())
-      return { _175247759708, ARUCO};
-  }
-  if( _params.mode == BOTH || _params.mode == KEYPOINTS) 
-  {
-    cv::Mat _11093821901392, _2654435885;
-    vector<cv::Point3f>_11093822296219;
-    vector<bool> _46082576203004608;
-    if (_11671783024730682148(_3005401603918369712.imageParams.CameraMatrix,
-            _3005401603918369712.und_kpts, _3005401603918369727.und_kpts,
-            _6807036698572949990, _11093821901392, _2654435885, _11093822296219,
-            _46082576203004608))
+    if(_params.markerSize <= 0)
+        throw std::runtime_error(string(__PRETTY_FUNCTION__) + "Invalid marker size");
+    if(_params.mode == BOTH || _params.mode == ARUCO) 
     {
-      cv::Mat _11093821901330 = cv::Mat::eye(4, 4, 5);
-      _11093821901392.copyTo(_11093821901330.colRange(0, 3).rowRange(0, 3));
-      _2654435885 *= _1686524438688096954;
-      _2654435885.copyTo(_11093821901330.rowRange(0, 3).colRange(3, 4));
-      return {_11093821901330, KEYPOINTS};
+        auto _175247759708 = ARUCO_initialize(ref_frame.markers, frame2.markers,
+                                ref_frame.imageParams.undistorted(),
+                                _params.markerSize, 0.02, _params.max_makr_rep_err,
+                                _params.minDistance, _4498230092506100729);
+
+        if(!_175247759708.empty())
+            return {_175247759708, ARUCO};
     }
-  }
-  return { cv::Mat(), NONE};
+    if(_params.mode == BOTH || _params.mode == KEYPOINTS) 
+    {
+        cv::Mat _11093821901392, _2654435885;
+        vector<cv::Point3f>_11093822296219;
+        vector<bool> _46082576203004608;
+        if (_11671783024730682148(ref_frame.imageParams.CameraMatrix,
+                ref_frame.und_kpts, frame2.und_kpts,
+                _6807036698572949990, _11093821901392, _2654435885, _11093822296219,
+                _46082576203004608))
+        {
+            cv::Mat _11093821901330 = cv::Mat::eye(4, 4, 5);
+            _11093821901392.copyTo(_11093821901330.colRange(0, 3).rowRange(0, 3));
+            _2654435885 *= _1686524438688096954;
+            _2654435885.copyTo(_11093821901330.rowRange(0, 3).colRange(3, 4));
+            return {_11093821901330, KEYPOINTS};
+        }
+    }
+    return {cv::Mat(), NONE};
 }
 
-MapInitializer::MapInitializer(float _46082543171087264, int _18204643580383888731) {
-
-  _10193178724179165899 = _46082543171087264;
-  _994360216124235670 = _46082543171087264 * _46082543171087264;
-  _3513368080762767352 = _18204643580383888731;
+MapInitializer::MapInitializer(float _46082543171087264, int _18204643580383888731) 
+{
+    _10193178724179165899 = _46082543171087264;
+    _994360216124235670 = _46082543171087264 * _46082543171087264;
+    _3513368080762767352 = _18204643580383888731;
 }
 
 bool MapInitializer::_11671783024730682148(const cv::Mat &_1646854292500902885,
@@ -221,7 +210,8 @@ bool MapInitializer::_11671783024730682148(const cv::Mat &_1646854292500902885,
         const std::vector<cv::KeyPoint> &_16987994083097500267,
         vector<cv::DMatch> &_5507076421631549640,
         cv::Mat &_11093821901461, cv::Mat &_11093822381707,
-        vector<cv::Point3f> &_706246337618936, vector<bool> &_1883142761634074017) {
+        vector<cv::Point3f> &_706246337618936, vector<bool> &_1883142761634074017) 
+{
 
   if(_5507076421631549640.size() < _params.minNumMatches)
     return false;
@@ -285,7 +275,8 @@ bool MapInitializer::_11671783024730682148(const cv::Mat &_1646854292500902885,
 }
 
 
-void MapInitializer::_5668215658172178667 (vector<bool>&_17271253899155467930, float& _46082543172245582, cv::Mat &_11093822009278 ) {
+void MapInitializer::_5668215658172178667(vector<bool>&_17271253899155467930, float& _46082543172245582, cv::Mat &_11093822009278) 
+{
 
   const int _2654435847 = _7917477704619030428.size();
   vector<cv::Point2f> _706246337605591, _706246337605588;
@@ -323,7 +314,8 @@ void MapInitializer::_5668215658172178667 (vector<bool>&_17271253899155467930, f
   }
 }
 
-void MapInitializer::_11788074806349018216 (vector<bool>&_17271253899155467930, float&_46082543172245582, cv::Mat &_11093821994570 ) {
+void MapInitializer::_11788074806349018216(vector<bool>&_17271253899155467930, float&_46082543172245582, cv::Mat &_11093821994570)
+{
 
   const int _2654435847 = _17271253899155467930.size();
   vector<cv::Point2f> _706246337605591, _706246337605588;
@@ -879,24 +871,25 @@ bool MapInitializer::_1187546224459158348 (vector<bool> &_17271253899155467930, 
   return false;
 }
 
-void MapInitializer :: _13188689179917490056 (const cv::KeyPoint &_11093822348761, 
+void MapInitializer::_13188689179917490056 (const cv::KeyPoint &_11093822348761, 
          const cv::KeyPoint &_11093822348742, const cv::Mat &_175247761573, 
-         const cv::Mat &_175247761572, cv::Mat &_11093821939030 ) {
-  
-  cv::Mat _2654435834(4, 4,5);
-  _2654435834.row(0) =_11093822348761.pt.x *_175247761573.row(2)- _175247761573.row(0);
-  _2654435834.row(1) = _11093822348761.pt.y *_175247761573.row(2)- _175247761573.row(1);
-  _2654435834.row(2) = _11093822348742.pt.x *_175247761572.row(2) - _175247761572.row(0);
-  _2654435834.row(3) = _11093822348742.pt.y *_175247761572.row(2) - _175247761572.row(1);
+         const cv::Mat &_175247761572, cv::Mat &_11093821939030 ) 
+{
+  cv::Mat _2654435834(4, 4, 5);
+  _2654435834.row(0) = _11093822348761.pt.x * _175247761573.row(2) - _175247761573.row(0);
+  _2654435834.row(1) = _11093822348761.pt.y * _175247761573.row(2) - _175247761573.row(1);
+  _2654435834.row(2) = _11093822348742.pt.x * _175247761572.row(2) - _175247761572.row(0);
+  _2654435834.row(3) = _11093822348742.pt.y * _175247761572.row(2) - _175247761572.row(1);
 
-  cv::Mat _2654435886,_2654435888, _175247760983;
-  cv::SVD::compute(_2654435834, _2654435888, _2654435886, _175247760983,cv::SVD::MODIFY_A | cv::SVD::FULL_UV);
-  _11093821939030 = _175247760983.row(3).t();
-  _11093821939030 = _11093821939030.rowRange(0, 3) / _11093821939030.at<float>( 3);
+  cv::Mat u, w, vt;
+  cv::SVD::compute(_2654435834, w, u, vt, cv::SVD::MODIFY_A | cv::SVD::FULL_UV);
+  _11093821939030 = vt.row(3).t();
+  _11093821939030 = _11093821939030.rowRange(0, 3) / _11093821939030.at<float>(3);
 }
 
-void MapInitializer::_12337435833092867029(const vector<cv::KeyPoint>&_46082576192198777, 
-   vector<cv::Point2f>&_11959346835625416039, cv::Mat &_2654435853 ) {
+void MapInitializer::_12337435833092867029(const vector<cv::KeyPoint>& _46082576192198777, 
+    vector<cv::Point2f>& _11959346835625416039, cv::Mat &_2654435853) 
+{
 
   float _46082575822310300 = 0;
   float _46082575822310301 = 0;
@@ -936,11 +929,12 @@ void MapInitializer::_12337435833092867029(const vector<cv::KeyPoint>&_460825761
   _2654435853.at<float>(1, 2) = -_46082575822310301 * _175247759793;
 }
 
-int MapInitializer::_993392631849970936 ( const cv::Mat &_2654435851, const cv::Mat &_2654435885, 
+int MapInitializer::_993392631849970936 (const cv::Mat &_2654435851, const cv::Mat &_2654435885, 
             const vector<cv::KeyPoint> &_3005399810348660273, const vector<cv::KeyPoint> &_3005399810348660272,
             const vector<Match>&_5507076421631549640, vector<bool> &_17271253899155467930,
             const cv::Mat &_2654435844, vector<cv::Point3f>&_706246337618936, float _11093822376282, 
-            vector<bool> &_3005399809928654743, float &_16937213055926717083 ) {
+            vector<bool> &_3005399809928654743, float &_16937213055926717083 ) 
+{
 
   const float _175247759975 = _2654435844.at<float>(0, 0);
   const float _175247759974 = _2654435844.at<float>(1, 1);
@@ -951,11 +945,9 @@ int MapInitializer::_993392631849970936 ( const cv::Mat &_2654435851, const cv::
   vector<float> _5800553007209659840;
   _5800553007209659840.reserve(_3005399810348660273.size());
   cv::Mat _175247761573(3, 4, 5, cv::Scalar(0));
-
   _2654435844.copyTo(_175247761573.rowRange(0, 3).colRange(0, 3));
-
   cv::Mat _175247761508 = cv::Mat::zeros(3, 1,5);
-  cv::Mat _175247761572(3, 4,5);
+  cv::Mat _175247761572(3, 4, 5);
   _2654435851.copyTo(_175247761572.rowRange(0, 3).colRange(0, 3));
   _2654435885.copyTo(_175247761572.rowRange(0, 3).col(3));
   _175247761572 = _2654435844 * _175247761572;
@@ -1031,48 +1023,45 @@ int MapInitializer::_993392631849970936 ( const cv::Mat &_2654435851, const cv::
   return _46082575790776546;
 }
 
-void MapInitializer::_11668855431419298303( const cv::Mat &_2654435838, cv::Mat &_175247761703, 
-         cv::Mat &_175247761702, cv::Mat &_2654435885 ) {
+void MapInitializer::_11668855431419298303(const cv::Mat &_2654435838, cv::Mat &_175247761703, 
+         cv::Mat &_175247761702, cv::Mat &_2654435885 ) 
+{
 
-  cv::Mat _2654435886, _2654435888, _175247760983;
-
-  cv::SVD::compute(_2654435838, _2654435888, _2654435886, _175247760983);
-
-  _2654435886.col(2).copyTo(_2654435885);
-  _2654435885 =_2654435885 / cv::norm(_2654435885);
-  cv::Mat _2654435856(3, 3, 5, cv::Scalar(0));
-  _2654435856.at<float>(0, 1) = -1;
-  _2654435856.at<float>(1, 0) = 1;
-  _2654435856.at<float>(2, 2) = 1;
-  _175247761703 = _2654435886 * _2654435856 * _175247760983;
-  if ( cv::determinant(_175247761703) < 0)
-    _175247761703 = -_175247761703;
-  _175247761702 = _2654435886 * _2654435856.t() * _175247760983;
-
-  if (cv::determinant(_175247761702)< 0)
-    _175247761702 = -_175247761702;
+    cv::Mat _2654435886, _2654435888, _175247760983;
+    cv::SVD::compute(_2654435838, _2654435888, _2654435886, _175247760983);
+    _2654435886.col(2).copyTo(_2654435885);
+    _2654435885 =_2654435885 / cv::norm(_2654435885);
+    cv::Mat _2654435856(3, 3, 5, cv::Scalar(0));
+    _2654435856.at<float>(0, 1) = -1;
+    _2654435856.at<float>(1, 0) = 1;
+    _2654435856.at<float>(2, 2) = 1;
+    _175247761703 = _2654435886 * _2654435856 * _175247760983;
+    if ( cv::determinant(_175247761703) < 0)
+        _175247761703 = -_175247761703;
+    _175247761702 = _2654435886 * _2654435856.t() * _175247760983;
+    if (cv::determinant(_175247761702)< 0)
+        _175247761702 = -_175247761702;
 }
 
-bool MapInitializer::_7274126694617365277 (const Frame &_46082543180066935, std::shared_ptr<Map>_11093822290287 ) 
+bool MapInitializer::_7274126694617365277(const Frame &frame, std::shared_ptr<Map> map)
 {
-  int _18242569162703393014 = 0;
-
-  for (size_t _2654435878 =0;_2654435878 <_46082543180066935.markers.size();_2654435878++) 
-  {
-    if(_46082543180066935.markers[_2654435878].poses.err_ratio > _params.aruco_minerrratio_valid)
-      _18242569162703393014++;
-  }
-  if(_18242569162703393014 == 0)
-    return false;
-  auto &_18139480568557707913 = _11093822290287->addKeyFrame(_46082543180066935);
-  _18139480568557707913.pose_f2g = se3( 0, 0, 0, 0, 0, 0);
-  for (size_t _2654435878 = 0;_2654435878 < _46082543180066935.markers.size();_2654435878++)
-  {
-    auto &_1681469518277799077 = _11093822290287->addMarker(_46082543180066935.markers[_2654435878]);
-    _11093822290287->addMarkerObservation(_1681469518277799077.id, _18139480568557707913.idx);
-    if(_46082543180066935.markers[_2654435878].poses.err_ratio > _params.aruco_minerrratio_valid)
-      _1681469518277799077.pose_g2m = _46082543180066935.markers[_2654435878].poses.sols[0];
-  }
-  return true;
+    int count = 0;
+    for (size_t i = 0; i < frame.markers.size(); i++) 
+    {
+        if(frame.markers[i].poses.err_ratio > _params.aruco_minerrratio_valid)
+            count++;
+    }
+    if(count == 0)
+        return false;
+    auto &new_frame = map->addKeyFrame(frame);
+    new_frame.pose_f2g = se3( 0, 0, 0, 0, 0, 0);
+    for (size_t i = 0; i < frame.markers.size(); i++)
+    {
+        auto &marker = map->addMarker(frame.markers[i]);
+        map->addMarkerObservation(marker.id, new_frame.idx);
+        if(frame.markers[i].poses.err_ratio > _params.aruco_minerrratio_valid)
+            marker.pose_g2m = frame.markers[i].poses.sols[0];
+    }
+    return true;
 }
 }

@@ -14,7 +14,7 @@ class MapInitializer {
     int _nAttempts = 0;
     FrameMatcher fmatcher;
 public:
-    enum MODE { ARUCO,KEYPOINTS,BOTH,NONE };
+    enum MODE {ARUCO, KEYPOINTS, BOTH, NONE};
     struct Params {
         float minDistance = 0.1;
         float minDescDistance = -1;
@@ -34,13 +34,13 @@ public:
     void reset();
     bool process(const Frame &f, std::shared_ptr<Map> map);
     void setReferenceFrame(const Frame &frame);
-    bool initialize(const Frame &frame2, std::shared_ptr<Map> map);
+    // bool initialize(const Frame &frame2, std::shared_ptr<Map> map);
 
 private:
     bool initialize_(const Frame &frame2, std::shared_ptr<Map> map);
     vector<cv::DMatch > _9860761537440310106;
     vector<cv::Point3f> _11999208601973379867;
-    bool _7274126694617365277( const Frame &_46082543180066935, std::shared_ptr<Map> _11093822290287);
+    bool _7274126694617365277(const Frame &frame, std::shared_ptr<Map> map);
     std::pair<cv::Mat,MODE> _9813592252344743680(const Frame &_3005401603918369712, 
         const Frame &_3005401603918369727, vector <cv::DMatch> &_6807036698572949990, float _1686524438688096954 = 0);
 
