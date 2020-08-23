@@ -31,11 +31,11 @@ MapManager::~MapManager()
   stop();
 }
 
-void MapManager::setMap(std::shared_ptr<Map> _11093822290287 ) 
+void MapManager::setMap(std::shared_ptr<Map> map) 
 {
-  _3370013330161650239 = _11093822290287;
+  _3370013330161650239 = map;
   _14139181480504378433 = std::make_shared<LoopDetector>();
-  _14139181480504378433->setParams(_11093822290287);
+  _14139181480504378433->setParams(map);
 }
 
 uint32_t MapManager::getLastAddedKeyFrameIdx() const 
@@ -103,8 +103,7 @@ bool MapManager::mapUpdate()
   if(_9129579858736004991 != WAITINGFORUPDATE)
     return false;
   _9129579858736004991 = WORKING;
-  _3370013330161650239->lock(
-      __FUNCTION__, "/home/xj-zjd/work_space/self_work/ucoslam-1.0.8/src/utils/mapmanager.cpp",1190);
+  _3370013330161650239->lock(__FUNCTION__, "/home/xj-zjd/work_space/self_work/ucoslam-1.0.8/src/utils/mapmanager.cpp",1190);
 
   if(_8346364136266015358.foundLoop())
   {
@@ -143,17 +142,15 @@ bool MapManager::mapUpdate()
 
   _13909239728712143806 = _3370013330161650239->keyframes[_5097784010653838202].pose_f2g;
   _3370013330161650239->removeWeakConnections(_11028815416989897150, 8);
-  _3370013330161650239->unlock(
-          __FUNCTION__, "/home/xj-zjd/work_space/self_work/ucoslam-1.0.8/src/utils/mapmanager.cpp",1477);
+  _3370013330161650239->unlock(__FUNCTION__, "/home/xj-zjd/work_space/self_work/ucoslam-1.0.8/src/utils/mapmanager.cpp",1477);
 
   _7124056634192091721.clear();
   _2225497823225366210.clear();
-  _9129579858736004991 =IDLE;
-
+  _9129579858736004991 = IDLE;
   return true;
 }
 
-void MapManager::start ()
+void MapManager::start()
 {
   if(_4098354751575524583.joinable())
     return;
@@ -164,10 +161,9 @@ void MapManager::start ()
   });
 }
 
-void MapManager:: stop ()
+void MapManager::stop()
 {
-
-  if (_4098354751575524583.joinable()) 
+  if(_4098354751575524583.joinable()) 
   {
     _4090819199315697352 =true;
     _4098394392539754261 =false;
@@ -176,9 +172,8 @@ void MapManager:: stop ()
   }
 }
 
-void MapManager::reset ()
+void MapManager::reset()
 {
-
   if (_4098354751575524583.joinable())
   {
     _4090819199315697352 =true;
@@ -203,7 +198,7 @@ void MapManager::reset ()
   _4098394392539754261 = false;
 }
 
-Frame &MapManager::_1018502486064296669( Frame *_10801929782564841966) 
+Frame &MapManager::_1018502486064296669(Frame *_10801929782564841966) 
 {
 
   auto _17591916323427771156 = [this](){
@@ -221,9 +216,7 @@ Frame &MapManager::_1018502486064296669( Frame *_10801929782564841966)
 
   for (auto &_175247760268 : _15327812228135655144)
   {
-
     _175247760268.second++;
-
     if(_175247760268.second >3)
       _16997208802817240490.push_back(_175247760268.first);
   }
@@ -402,7 +395,7 @@ Frame &MapManager::_1018502486064296669( Frame *_10801929782564841966)
   return _16937201236903537060;
 }
 
-void MapManager::_12295639104386009589 ()
+void MapManager::_12295639104386009589()
 {
   _4098394392539754261 =false;
   Frame *_10801929782564841966;
@@ -411,8 +404,7 @@ void MapManager::_12295639104386009589 ()
   if (_10801929782564841966 ==__null)
     return;
   _9129579858736004991 = WORKING;
-  _3370013330161650239->lock(__FUNCTION__, "/home/xj-zjd/work_space/self_work/ucoslam-1.0.8/src/"
-                        "utils/mapmanager.cpp",3586);
+  _3370013330161650239->lock(__FUNCTION__, "/home/xj-zjd/work_space/self_work/ucoslam-1.0.8/src/utils/mapmanager.cpp",3586);
 
   Frame &_16937201236903537060 = _1018502486064296669( _10801929782564841966);
   delete _10801929782564841966;
@@ -420,12 +412,10 @@ void MapManager::_12295639104386009589 ()
     _8346364136266015358 =_14139181480504378433->detectLoopFromKeyPoints(
             _16937201236903537060, _11028815416989897150);
 
-  _3370013330161650239->unlock(__FUNCTION__, "/home/xj-zjd/work_space/self_work/ucoslam-1.0.8/src/"
-                        "utils/mapmanager.cpp",3649);
+  _3370013330161650239->unlock(__FUNCTION__, "/home/xj-zjd/work_space/self_work/ucoslam-1.0.8/src/utils/mapmanager.cpp",3649);
   _7124056634192091721 =_8352839093262355382();
   _3370013330161650239->removePoints(_7124056634192091721.begin(), _7124056634192091721.end(), false);
-  _3370013330161650239->lock(__FUNCTION__, "/home/xj-zjd/work_space/self_work/ucoslam-1.0.8/src/"
-                         "utils/mapmanager.cpp",3674);
+  _3370013330161650239->lock(__FUNCTION__, "/home/xj-zjd/work_space/self_work/ucoslam-1.0.8/src/utils/mapmanager.cpp",3674);
 
   int _175247759447 = 20;
   if (_16937201236903537060.imageParams.isStereoCamera()) 
@@ -453,19 +443,16 @@ void MapManager::_12295639104386009589 ()
       _3370013330161650239->addMapPointObservation(_3005399799907669332.id, _11093822298882.first,
               _11093822298882.second);
   }
-  _3370013330161650239->unlock(__FUNCTION__, "/home/xj-zjd/work_space/self_work/ucoslam-1.0.8/"
-                           "src/utils/mapmanager.cpp",3861);
+  _3370013330161650239->unlock(__FUNCTION__, "/home/xj-zjd/work_space/self_work/ucoslam-1.0.8/src/utils/mapmanager.cpp",3861);
 
   if (_5860250156218117893.empty())
   {
-    _3370013330161650239->lock(__FUNCTION__, "/home/xj-zjd/work_space/self_work/ucoslam-1.0.8/src/"
-                                             "utils/mapmanager.cpp",3883);
+    _3370013330161650239->lock(__FUNCTION__, "/home/xj-zjd/work_space/self_work/ucoslam-1.0.8/src/utils/mapmanager.cpp",3883);
     auto _16937196451844060927 = _17400054198872595804(_16937201236903537060);
     _7124056634192091721.insert(_7124056634192091721.end(),
         _16937196451844060927.begin(),_16937196451844060927.end());
 
-    _3370013330161650239->unlock(__FUNCTION__, "/home/xj-zjd/work_space/self_work/ucoslam-1.0.8/src/"
-                          "utils/mapmanager.cpp",3924);
+    _3370013330161650239->unlock(__FUNCTION__, "/home/xj-zjd/work_space/self_work/ucoslam-1.0.8/src/utils/mapmanager.cpp",3924);
   }
   {
     int _706246332319248 = 0;
@@ -553,8 +540,8 @@ set<uint32_t> MapManager::_12040998890815479673(uint32_t _13776525365726664701)
   return _6840168697625608294;
 }
 
-set<uint32_t> MapManager::_17920146964341780569( uint32_t _13776525365726664701) {
-
+set<uint32_t> MapManager::_17920146964341780569(uint32_t _13776525365726664701) 
+{
   auto _706246308970949 =[](uint32_t _2654435866, uint32_t _2654435867) {
             if (_2654435866 > _2654435867)
               swap( _2654435866, _2654435867);
@@ -1364,91 +1351,90 @@ void MapManager::_11362629803814604768 (uint32_t _16937255065087280628, int _300
   _15944432432468226297->optimize(&_4098394392539754261);
 }
 
-void MapManager::toStream (std::ostream &_11093822381060 )
+void MapManager::toStream(std::ostream &str)
 {
-
-  while (_9129579858736004991 == WORKING)
+  while(_9129579858736004991 == WORKING)
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   mapUpdate();
-  uint64_t _11093822380353 =1823312417;
-  _11093822381060.write((char *)&_11093822380353,sizeof(_11093822380353));
-  _11093822381060.write((char *)&_5097784010653838202, sizeof(_5097784010653838202));
-  _11093822381060.write((char *)&_9728777609121731073,sizeof(_9728777609121731073));
-  _11093822381060.write((char *)&_4090819199315697352,sizeof(_4090819199315697352));
+  uint64_t _11093822380353 = 1823312417;
+  str.write((char *)&_11093822380353,sizeof(_11093822380353));
+  str.write((char *)&_5097784010653838202, sizeof(_5097784010653838202));
+  str.write((char *)&_9728777609121731073,sizeof(_9728777609121731073));
+  str.write((char *)&_4090819199315697352,sizeof(_4090819199315697352));
   auto _11093821926013 = _9129579858736004991.load();
-  _11093822381060.write((char *)&_11093821926013,sizeof(_11093821926013));
-  toStream__(_5860250156218117893.buffer_, _11093822381060);
-  toStream__(_7124056634192091721, _11093822381060);
-  toStream__(_2225497823225366210, _11093822381060);
-  toStream__kv(_15327812228135655144, _11093822381060);
-  _11093822381060.write((char *) &_13990461397173511559,sizeof( _13990461397173511559));
-  _13909239728712143806.toStream(_11093822381060);
-  _11093822381060.write((char *)&_1061304613240460439,sizeof(_1061304613240460439));
-  _11093822381060.write((char *)&_11028815416989897150,sizeof(_11028815416989897150));
-  _11093822381060.write(( char *)&_12303014364795142948,sizeof(_12303014364795142948));
-  _11093822381060.write((char *)&_4098394392539754261, sizeof(_4098394392539754261));
-  _8346364136266015358.toStream(_11093822381060);
+  str.write((char *)&_11093821926013,sizeof(_11093821926013));
+  toStream__(_5860250156218117893.buffer_, str);
+  toStream__(_7124056634192091721, str);
+  toStream__(_2225497823225366210, str);
+  toStream__kv(_15327812228135655144, str);
+  str.write((char *) &_13990461397173511559,sizeof( _13990461397173511559));
+  _13909239728712143806.toStream(str);
+  str.write((char *)&_1061304613240460439,sizeof(_1061304613240460439));
+  str.write((char *)&_11028815416989897150,sizeof(_11028815416989897150));
+  str.write(( char *)&_12303014364795142948,sizeof(_12303014364795142948));
+  str.write((char *)&_4098394392539754261, sizeof(_4098394392539754261));
+  _8346364136266015358.toStream(str);
 }
 
-void MapManager::fromStream(std::istream &_11093822381060)
+void MapManager::fromStream(std::istream &str)
 {
 
   stop();
   uint64_t _11093822380353;
-  _11093822381060.read((char *)&_11093822380353,sizeof(_11093822380353));
+  str.read((char *)&_11093822380353,sizeof(_11093822380353));
 
   if (_11093822380353 != 1823312417)
     throw std::runtime_error(string(__PRETTY_FUNCTION__) + "Could not read signature of Mapmanager in stream");
 
-  _11093822381060.read((char *)&_5097784010653838202,sizeof(_5097784010653838202));
-  _11093822381060.read((char *)&_9728777609121731073, sizeof(_9728777609121731073));
-  _11093822381060.read((char *)&_4090819199315697352,sizeof(_4090819199315697352));
+  str.read((char *)&_5097784010653838202,sizeof(_5097784010653838202));
+  str.read((char *)&_9728777609121731073, sizeof(_9728777609121731073));
+  str.read((char *)&_4090819199315697352,sizeof(_4090819199315697352));
 
   auto _16987968640077875288 =_9129579858736004991.load();
-  _11093822381060.read((char *)&_16987968640077875288,sizeof(_16987968640077875288));
+  str.read((char *)&_16987968640077875288,sizeof(_16987968640077875288));
   _9129579858736004991 = _16987968640077875288;
 
-  fromStream__( _5860250156218117893.buffer_, _11093822381060);
-  fromStream__(_7124056634192091721, _11093822381060);
-  fromStream__(_2225497823225366210, _11093822381060);
-  fromStream__kv(_15327812228135655144, _11093822381060);
-  _11093822381060.read((char *)&_13990461397173511559,sizeof(_13990461397173511559));
-  _13909239728712143806.fromStream(_11093822381060);
-  _11093822381060.read((char *)&_1061304613240460439,sizeof( _1061304613240460439));
-  _11093822381060.read((char *)&_11028815416989897150,sizeof(_11028815416989897150));
-  _11093822381060.read((char *)&_12303014364795142948, sizeof(_12303014364795142948));
-  _11093822381060.read((char *)&_4098394392539754261,sizeof(_4098394392539754261));
-  _8346364136266015358.fromStream(_11093822381060);
+  fromStream__( _5860250156218117893.buffer_, str);
+  fromStream__(_7124056634192091721, str);
+  fromStream__(_2225497823225366210, str);
+  fromStream__kv(_15327812228135655144, str);
+  str.read((char *)&_13990461397173511559,sizeof(_13990461397173511559));
+  _13909239728712143806.fromStream(str);
+  str.read((char *)&_1061304613240460439,sizeof( _1061304613240460439));
+  str.read((char *)&_11028815416989897150,sizeof(_11028815416989897150));
+  str.read((char *)&_12303014364795142948, sizeof(_12303014364795142948));
+  str.read((char *)&_4098394392539754261,sizeof(_4098394392539754261));
+  _8346364136266015358.fromStream(str);
 }
 
 uint64_t MapManager::getSignature()
 {
-  Hash _11093822380353;
-  _11093822380353 += _5097784010653838202;
-  _11093822380353 += _9728777609121731073;
-  _11093822380353 += _4090819199315697352;
-  _11093822380353 += _9129579858736004991.load();
-  _11093822380353 += _5860250156218117893.size();
+  Hash hash_value;
+  hash_value += _5097784010653838202;
+  hash_value += _9728777609121731073;
+  hash_value += _4090819199315697352;
+  hash_value += _9129579858736004991.load();
+  hash_value += _5860250156218117893.size();
 
   for (auto _175247760284 : _7124056634192091721)
-    _11093822380353 += _175247760284;
+    hash_value += _175247760284;
 
   for (auto _175247760284 : _2225497823225366210)
-    _11093822380353 += _175247760284;
+    hash_value += _175247760284;
 
   for (auto _175247760284 : _15327812228135655144)
   {
-    _11093822380353 += _175247760284.first;
-    _11093822380353 += _175247760284.second;
+    hash_value += _175247760284.first;
+    hash_value += _175247760284.second;
   }
-  _11093822380353 += _13990461397173511559;
-  _11093822380353 += _13909239728712143806;
-  _11093822380353 += _1061304613240460439;
-  _11093822380353 += _11028815416989897150;
-  _11093822380353 += _12303014364795142948;
-  _11093822380353 += _8346364136266015358.getSignature();
+  hash_value += _13990461397173511559;
+  hash_value += _13909239728712143806;
+  hash_value += _1061304613240460439;
+  hash_value += _11028815416989897150;
+  hash_value += _12303014364795142948;
+  hash_value += _8346364136266015358.getSignature();
 
-  return _11093822380353;
+  return hash_value;
 }
 
 void MapManager::_12244964123780599670 (Frame &_6807141023702418932, const LoopDetector::LoopClosureInfo &_11093822343890 )

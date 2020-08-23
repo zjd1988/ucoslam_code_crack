@@ -38,7 +38,7 @@ public:
 
 private:
     bool initialize_(const Frame &frame2, std::shared_ptr<Map> map);
-    vector<cv::DMatch > _9860761537440310106;
+    vector<cv::DMatch> _9860761537440310106;
     vector<cv::Point3f> _11999208601973379867;
     bool _7274126694617365277(const Frame &frame, std::shared_ptr<Map> map);
     std::pair<cv::Mat,MODE> _9813592252344743680(const Frame &_3005401603918369712, 
